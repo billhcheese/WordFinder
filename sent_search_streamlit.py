@@ -61,7 +61,7 @@ def extract_matches(root):
             combined_matches.append(elem)
     return combined_matches
 
-def write_matches_to_log(matches, logger = True, log_file = "xml_parsed_log.txt"):
+def write_matches_to_log(matches, logger = False, log_file = "xml_parsed_log.txt"):
     """
     Write the matches to a log file, formatted accordingly.
     Bug: This function does not log page breaks if they happen in a table or other irregular word doc elements some times. 
