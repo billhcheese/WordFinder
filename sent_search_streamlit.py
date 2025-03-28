@@ -388,9 +388,7 @@ def main():
         
         st.markdown("""
         _Note: The algorithm currently does not support searching for general terms. For example it will not search for chair or desk if you put furniture as a search term in your .txt file._
-        """)
-
-        
+        """)      
 
     with st.expander("Don't know how to create a .txt file? Click here for instructions"):
         st.subheader("Creating a .txt file", anchor='txt-create')
@@ -449,7 +447,7 @@ def main():
         The CSV file contains the following columns, which are used to track the matching process and its results. Here's what each header represents:
 
         1. **`sent_id`**:
-        represents the **unique identifier** for each sentence or entry in the dataset. It is used to differentiate each sentence that is being processed and they are sequentially numbered according to the order in which they appear in the document.
+        represents the **unique identifier** for each sentence or entry in the uploaded document. It is used to differentiate each sentence that is being processed and they are sequentially numbered according to the order in which they appear in the document.
 
         2. **`list_matchs`**:
         shows **the words/phrases in your uploaded word list** that have a match or similar match in the sentence.
