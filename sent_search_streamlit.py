@@ -419,14 +419,13 @@ def main():
         - Type `TextEdit` and press Enter to launch the application.
 
         2. **Write your text**:
-        - Type the content you want in the `.txt` file.
+        - Click on `File` in the top menu and select `New`.
+        - In the new document, type your content.
         - Make sure the file format is set to `Plain Text` by going to `Format` in the top menu and selecting `Make Plain Text`.
 
         3. **Save the file**:
-        - Click on `File` in the top menu and select `New`.
-        - In the new document, type your content.
         - Once you're done, click on `File` and then select `Save...`.
-        - In the "Save As" field, enter your desired file name (e.g., `myfile.txt`).
+        - In the "Save As" field, enter your desired file name (e.g., `myfile.txt`), it must end in `.txt`.
         - Choose a location to save the file and click `Save`.
         """)
 
@@ -456,13 +455,13 @@ def main():
         contains the **specific words or phrases** that were identified in the sentence **from your uploaded document** as a match or similar match to the words/phrases in your uploaded word list.
 
         4. **`match_certainty`**:
-        represents the **certainty level** of the match. It indicates how confident the system is that the words or phrases identified are correct matches. The value ranges from 1-100, with higher values indicating greater certainty. A value of 100 means there is an exact match. Phrases do not recieve a match certainty score.
+        represents the **certainty level** of the match. It indicates how confident the system is that the words or phrases identified are correct matches. The value ranges from 0-100, with higher values indicating greater certainty. A value of 100 means there is an exact match. Phrases do not recieve a match certainty score.
 
         5. **`sentence`**:
         shows the sentence from the text that was evaluated. It provides context for the identified matches and allows the user to search for the match sentence in the original document via keyboard shortcut `ctrl + f` or `cmd + f` in that docuemnt.
 
         6. **`page_at_or_below`**:
-        indicates the **page number** at or beyond the sentence was found in the orginal word .docx file. The sentence locating is somewhat imprecise, but the sentence **will not** appear before the listed page number for that sentence. The page locating will tend to become less accurate the deeper into your document you scroll due to word formatting limitations from tables and non-text componeents in a word document.
+        indicates the **page number** at or beyond the sentence was found in the orginal word .docx file. The sentence locating is somewhat imprecise, but the sentence **will not** appear before the listed page number for that sentence. The page locating will tend to become less accurate the deeper into your document you scroll due to word formatting limitations from tables and non-text components in a word document.
 
         ### How to Interpret the CSV Output:
         - The **`sent_id`** allows you and the system to track unique sentences in your document.
