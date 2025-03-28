@@ -280,10 +280,15 @@ def collapse_sentence_data(sentence_list):
 def main():
     """Main function to parse the XML, extract matches, and write them to a log."""
     # Streamlit UI
-    st.title("Upload DOCX and Download Generated Files")
+    st.set_page_config(layout="wide")
+    st.title("Welcome to the Word Finder!")
+    st.markdown('This tool allows you to upload a document (must be .docx file) and a list of words or phrases (must be [.txt file](#txt-create) in a [certain format](#txt-format)). The document will be searched to find matches & similar matches to the words or phrases in your uploaded list of words. The results will be saved to a csv file that you can download. More information on the generated .csv matches file is detailed [below](#csv-file-structure).')
 
-    uploaded_docx = st.file_uploader("Choose a DOCX file", type=["docx"])
-    uploaded_txt = st.file_uploader("Choose a TXT file", type=["txt"])
+    st.header("Upload the Document You Want SEARCHED")
+    uploaded_docx = st.file_uploader("Must choose a DOCX file", type=["docx"])
+    st.header("Upload the List of Words or Phrases You Want to SEARCH FOR")
+    uploaded_txt = st.file_uploader("Must choose a TXT file. Make sure your TXT file word list in structured correctly. See [Word List Structure Rules](#txt-format) below", type=["txt"])
+    # Streamlit app to display instructions
     
     if uploaded_docx is not None and uploaded_txt is not None:
         # Display the button to process files
@@ -326,6 +331,8 @@ def main():
             word_list = load_word_list(word_list_docx)
             st.write('word list loaded')
 
+            st.write('processing matches... (this may take a few minutes)')
+
             # Check the sentences for matches
             check_sentence(sentence_list, word_list)
             st.write('sentences checked')
@@ -354,7 +361,7 @@ def main():
                 st.download_button(
                 label="Download Generated Files",
                 data=f,
-                file_name="collapsed_data.csv",
+                file_name="wordfinder_matches.csv",
                 mime="text/csv",
                 )
             
@@ -362,6 +369,111 @@ def main():
             os.remove(word_docx)
             os.remove(word_list_docx)
             os.remove(csv_file.name)
+    
+    st.header("FAQ")
+
+    with st.expander("How do I structure my list of words or phrases in my uploaded .txt file?"):
+        st.subheader("Word List Structure Rules", anchor='txt-format')
+        # Add the instructions as text
+        # Instructions for formatting the .txt file
+        st.markdown("""
+        Make sure that your .txt file has each word or phrase on a new line. Here is the format you should follow:""")
+
+        st.code("""
+        red
+        flowers that bloom
+        blue
+        wilting flowers
+        """)
+        
+        st.markdown("""
+        _Note: The algorithm currently does not support searching for general terms. For example it will not search for chair or desk if you put furniture as a search term in your .txt file._
+        """)
+
+        
+
+    with st.expander("Don't know how to create a .txt file? Click here for instructions"):
+        st.subheader("Creating a .txt file", anchor='txt-create')
+        # Add the instructions as text
+        st.write("""
+        ### On Windows: Using Notepad
+
+        1. **Open Notepad**:
+        - Press `Windows + R` to open the Run dialog.
+        - Type `notepad` and press Enter.
+
+        2. **Write your text**:
+        - Type the content you want in the `.txt` file.
+
+        3. **Save the file**:
+        - Click on `File` in the top-left corner.
+        - Select `Save As`.
+        - In the "Save as type" dropdown, make sure it says `Text Documents (*.txt)`.
+        - Choose a location to save the file and give it a name (e.g., `myfile.txt`).
+        - Click `Save`.
+        """)
+
+        st.write("""
+        ### On Mac: Using TextEdit
+
+        1. **Open TextEdit**:
+        - Open Spotlight by pressing `Cmd + Space`.
+        - Type `TextEdit` and press Enter to launch the application.
+
+        2. **Write your text**:
+        - Type the content you want in the `.txt` file.
+        - Make sure the file format is set to `Plain Text` by going to `Format` in the top menu and selecting `Make Plain Text`.
+
+        3. **Save the file**:
+        - Click on `File` in the top menu and select `New`.
+        - In the new document, type your content.
+        - Once you're done, click on `File` and then select `Save...`.
+        - In the "Save As" field, enter your desired file name (e.g., `myfile.txt`).
+        - Choose a location to save the file and click `Save`.
+        """)
+
+    with st.expander("What is in the generated .csv file?"):
+        st.subheader("CSV File Structure", anchor='csv-file-structure')
+        st.write("""        
+        ### Example of CSV Output
+
+        Here’s an example of how a row might look in the CSV file:
+
+        | sent_id | list_matchs          | found_words          | match_certainty | sentence                             | page_at_or_below |
+        |---------|----------------------|----------------------|-----------------|--------------------------------------|-------------------|
+        | 5       | red, blue  | red, rod, blue | 100            | Red rods are better than blue ones | 2                 |
+        | 24       | wilting flowers          | wilting, flowers           |             | She is a wilting flower.     | 3                 |
+        | 300       | flowers that bloom, red       | blowers, that, gloomy, red        |     100        | The red blowers are his that seem gloomy | 5             |
+
+        ### CSV Output Structure
+        The CSV file contains the following columns, which are used to track the matching process and its results. Here's what each header represents:
+
+        1. **`sent_id`**:
+        represents the **unique identifier** for each sentence or entry in the dataset. It is used to differentiate each sentence that is being processed and they are sequentially numbered according to the order in which they appear in the document.
+
+        2. **`list_matchs`**:
+        shows **the words/phrases in your uploaded word list** that have a match or similar match in the sentence.
+
+        3. **`found_words`**:
+        contains the **specific words or phrases** that were identified in the sentence **from your uploaded document** as a match or similar match to the words/phrases in your uploaded word list.
+
+        4. **`match_certainty`**:
+        represents the **certainty level** of the match. It indicates how confident the system is that the words or phrases identified are correct matches. The value ranges from 1-100, with higher values indicating greater certainty. A value of 100 means there is an exact match. Phrases do not recieve a match certainty score.
+
+        5. **`sentence`**:
+        shows the sentence from the text that was evaluated. It provides context for the identified matches and allows the user to search for the match sentence in the original document via keyboard shortcut `ctrl + f` or `cmd + f` in that docuemnt.
+
+        6. **`page_at_or_below`**:
+        indicates the **page number** at or beyond the sentence was found in the orginal word .docx file. The sentence locating is somewhat imprecise, but the sentence **will not** appear before the listed page number for that sentence. The page locating will tend to become less accurate the deeper into your document you scroll due to word formatting limitations from tables and non-text componeents in a word document.
+
+        ### How to Interpret the CSV Output:
+        - The **`sent_id`** allows you and the system to track unique sentences in your document.
+        - The **`list_matchs`** gives a overview of the matched keywords or phrases from your uploaded word list.
+        - Thea **`found_words`** lists the exact words that were found in the sentence for you to review.
+        - The **`match_certainty`** gives a confidence level on how accurate the match is.
+        - The **`sentence`** column provides context, so you can understand where the matched words were found in the text.
+        - The **`page_at_or_below`** helps track where in a document or series of pages the sentence is located, if you need to edit the sentence.
+        """)
 
 # Run the main function
 if __name__ == "__main__":
