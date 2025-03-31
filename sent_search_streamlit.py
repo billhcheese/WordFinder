@@ -295,7 +295,7 @@ def main():
     st.header("Upload the Document You Want :violet[Searched]")
     uploaded_docx = st.file_uploader(":grey[Must choose a DOCX file]", type=["docx"])
     st.header("Upload the List of Words or Phrases You Want to :orange[Search For]")
-    uploaded_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list in structured correctly. See [Word List Structure Rules](#txt-format) below]", type=["txt"])
+    uploaded_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below]", type=["txt"])
     # Streamlit app to display instructions
     
     if uploaded_docx is not None and uploaded_txt is not None:
