@@ -280,14 +280,22 @@ def collapse_sentence_data(sentence_list):
 def main():
     """Main function to parse the XML, extract matches, and write them to a log."""
     # Streamlit UI
-    st.set_page_config(layout="wide")
-    st.title("Welcome to the Word Finder!")
-    st.markdown('This tool allows you to upload a document (must be .docx file) and a list of words or phrases (must be [.txt file](#txt-create) in a [certain format](#txt-format)). The document will be searched to find matches & similar matches to the words or phrases in your uploaded list of words. The results will be saved to a csv file that you can download. More information on the generated .csv matches file is detailed [below](#csv-file-structure).')
+    # Remove whitespace from the top of the page and sidebar
+    st.set_page_config(layout="wide",page_icon=":paperclip:",page_title="The Word Finder")
+    col1, col2 = st.columns([1,8],gap = "small",vertical_alignment="bottom")
+    with col1:
+        st.image("clip.png")
+    with col2:
+        st.title("Welcome to the Word Finder!")
 
-    st.header("Upload the Document You Want SEARCHED")
-    uploaded_docx = st.file_uploader("Must choose a DOCX file", type=["docx"])
-    st.header("Upload the List of Words or Phrases You Want to SEARCH FOR")
-    uploaded_txt = st.file_uploader("Must choose a TXT file. Make sure your TXT file word list in structured correctly. See [Word List Structure Rules](#txt-format) below", type=["txt"])
+    st.markdown(':grey[This tool allows you to upload a document (must be .docx file) and a list of words or phrases (must be [.txt file](#txt-create) in a [certain format](#txt-format)). The document will be searched to find matches & similar matches to the words or phrases in your uploaded list of words. The results will be saved to a csv file that you can download. More information on the generated .csv matches file is detailed [below](#csv-file-structure).]')
+
+    st.divider()
+
+    st.header("Upload the Document You Want :violet[Searched]")
+    uploaded_docx = st.file_uploader(":grey[Must choose a DOCX file]", type=["docx"])
+    st.header("Upload the List of Words or Phrases You Want to :orange[Search For]")
+    uploaded_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list in structured correctly. See [Word List Structure Rules](#txt-format) below]", type=["txt"])
     # Streamlit app to display instructions
     
     if uploaded_docx is not None and uploaded_txt is not None:
@@ -370,6 +378,8 @@ def main():
             os.remove(word_list_docx)
             os.remove(csv_file.name)
     
+    st.divider()
+
     st.header("FAQ")
 
     with st.expander("How do I structure my list of words or phrases in my uploaded .txt file?"):
