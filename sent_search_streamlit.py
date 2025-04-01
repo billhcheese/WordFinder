@@ -17,7 +17,7 @@ def unzip_word_document(docx_path, extract_to_folder):
     # Ensure the output folder exists
     if not os.path.exists(extract_to_folder):
         os.makedirs(extract_to_folder)
-    
+    #test comment to test new repo
     try:
         with zipfile.ZipFile(docx_path, 'r') as zip_ref:
             zip_ref.extractall(extract_to_folder)
