@@ -373,7 +373,7 @@ def main():
             st.write('xml parsed')
             
             # Write the matches to a log file
-            xml_parsed = write_matches_to_log(matches, logger = True)
+            xml_parsed = write_matches_to_log(matches, logger = False)
             st.write('xml written to log')
 
             # Turn xml into sentence units
