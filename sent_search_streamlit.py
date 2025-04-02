@@ -290,6 +290,15 @@ def main():
         [class="stAppDeployButton"] {
             display: none;
         }
+        ._profileContainer_gzau3_53 {
+            display: none !important;
+        }
+        ._profileContainer_gzau3_63 {
+            display: none !important;
+        }
+        img[src="https://avatars.githubusercontent.com/u/23347095?v=4"] {
+            display: none !important;
+        }
         div a[href="https://share.streamlit.io/user/billhcheese"] {
         display: none;
         }
