@@ -290,9 +290,8 @@ def main():
         [class="stAppDeployButton"] {
             display: none;
         }
-        ._profileContainer_gzau3_53 {
-            display: none !important;
-        }
+        div a[href="https://share.streamlit.io/user/billhcheese"] {
+        display: none;
         }
     </style>
 
