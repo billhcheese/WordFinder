@@ -330,7 +330,7 @@ def main():
     st.header("Upload the List of Words or Phrases You Want to :orange[Search For]")
     uploaded_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below]", type=["txt"], key = "txt_uploader_wordlist")
     
-    whitelist_incl = st.toggle("Exclude specific words from matching?")
+    whitelist_incl = st.toggle("Too many similar words matching? Exclude a list of exact words")
     if whitelist_incl:
         st.header("Upload a Specific List of Words You Want to :red[Exclude]")
         uploaded_whitelist_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below. *This does not exclude phrases at the moment.*]", type=["txt"], key = "txt_uploader_whitelist")
