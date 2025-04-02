@@ -279,8 +279,23 @@ def collapse_sentence_data(sentence_list):
 def main():
     """Main function to parse the XML, extract matches, and write them to a log."""
     # Streamlit UI
+    
     # Remove whitespace from the top of the page and sidebar
+    # the custom CSS lives here:
+    hide_default_format = """
+    <style>
+        .reportview-container .main footer {visibility: hidden;}    
+        #MainMenu, header, footer {visibility: hidden;}
+        div.stActionButton{visibility: hidden;}
+        [class="stAppDeployButton"] {
+            display: none;
+        }
+    </style>
+
+    """
     st.set_page_config(layout="wide",page_icon=":paperclip:",page_title="The Word Finder")
+    # inject the CSS
+    st.markdown(hide_default_format, unsafe_allow_html=True)
     col1, col2 = st.columns([1,8],gap = "small",vertical_alignment="bottom")
     with col1:
         st.image("clip.png")
