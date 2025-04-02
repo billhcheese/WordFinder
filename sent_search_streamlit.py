@@ -156,7 +156,13 @@ def sentence_convert(xml_parsed):
 def load_word_list(word_file):
     # Function to load the words from a given list
     with open(word_file, 'r') as file:
-        return [line.strip() for line in file.readlines() if line.strip()]
+        return [line.strip().lower() for line in file.readlines() if line.strip()]
+        #return [line.strip().lower() for line in file.readlines()]
+
+def load_white_list(white_file):
+    # Function to load the words from a given list
+    with open(white_file, 'r') as file:
+        return [line.strip().lower() for line in file.readlines() if line.strip()]
         #return [line.strip().lower() for line in file.readlines()]
 
 #FUNCTIONS TO CHECK THE SENTENCES AGAINST THE WORD LIST-------------------------------------
@@ -192,7 +198,7 @@ def tokenize_word(word_list):
 
     return token_items
 
-def check_sentence(sentence_list,word_list): #to compare the sentence to the word list
+def check_sentence(sentence_list,word_list,white_list = []): #to compare the sentence to the word list
     sensitivity = 75
     similarity_tracker = {}
     token_word_dict = tokenize_word(word_list)
@@ -209,7 +215,7 @@ def check_sentence(sentence_list,word_list): #to compare the sentence to the wor
                 for word in word_phrase['word_tokens']:
                     word_ratio = fuzz.ratio(sent_word, word)
                     similarity_tracker[sent_id][sent_word][word]=word_ratio
-                    if word_phrase['phrase_type'] == 'single_word' and word_ratio >= sensitivity:
+                    if word_phrase['phrase_type'] == 'single_word' and word_ratio >= sensitivity and sent_word not in white_list:
                         sent_item['matches'].append({
                             'match': word,
                             'ratio': word_ratio,
@@ -320,8 +326,15 @@ def main():
 
     st.header("Upload the Document You Want :violet[Searched]")
     uploaded_docx = st.file_uploader(":grey[Must choose a DOCX file]", type=["docx"])
+    
     st.header("Upload the List of Words or Phrases You Want to :orange[Search For]")
-    uploaded_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below]", type=["txt"])
+    uploaded_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below]", type=["txt"], key = "txt_uploader_wordlist")
+    
+    whitelist_incl = st.toggle("Exclude specific words from matching?")
+    if whitelist_incl:
+        st.header("Upload a Specific List of Words You Want to :red[Exclude]")
+        uploaded_whitelist_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below. *This does not exclude phrases at the moment.*]", type=["txt"], key = "txt_uploader_whitelist")
+
     # Streamlit app to display instructions
     
     if uploaded_docx is not None and uploaded_txt is not None:
@@ -335,6 +348,12 @@ def main():
             with NamedTemporaryFile(delete=False, mode="wb") as txt_tmp:
                 txt_tmp.write(uploaded_txt.getvalue())
                 word_list_docx = txt_tmp.name
+            
+            if whitelist_incl:
+                if uploaded_whitelist_txt is not None :
+                    with NamedTemporaryFile(delete=False, mode="wb") as txt_white_tmp:
+                        txt_white_tmp.write(uploaded_whitelist_txt.getvalue())
+                        white_list_docx = txt_white_tmp.name
 
             st.write("File successfully uploaded!")
             
@@ -365,10 +384,28 @@ def main():
             word_list = load_word_list(word_list_docx)
             st.write('word list loaded')
 
+            # Load the uploaded file
+            if whitelist_incl:
+                if uploaded_whitelist_txt is not None:
+                    st.write('whitelist is uploaded')
+                    whitelist = load_white_list(white_list_docx)
+                    wh_uploaded = True
+                    st.write('whitelist loaded')
+                else:
+                    st.write('whitelist is not uploaded')
+                    whitelist = []
+                    wh_uploaded = False
+                    st.write('whitelist is not loaded')
+            else:
+                st.write('whitelist is not uploaded')
+                whitelist = []
+                wh_uploaded = False
+                st.write('whitelist is not loaded')
+
             st.write('processing matches... (this may take a few minutes)')
 
             # Check the sentences for matches
-            check_sentence(sentence_list, word_list)
+            check_sentence(sentence_list, word_list, whitelist)
             st.write('sentences checked')
 
             # Create the DataFrame
