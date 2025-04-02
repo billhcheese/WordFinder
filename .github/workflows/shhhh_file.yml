@@ -1,0 +1,28 @@
+name: Add Timestamp File
+ 
+on:
+  schedule:
+    - cron: "0 2,6,10,14,18,22 * * *" # Runs daily at midnight UTC (adjust as needed)
+  workflow_dispatch: # Allows manual triggering of the workflow
+ 
+jobs:
+  create-and-commit:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Create timestamp file
+        run: |
+          mkdir -p Assets
+          echo "$(date)" > Assets/timestamp.txt
+          cat Assets/timestamp.txt  # Debugging: Show file content
+ 
+      - name: Commit and push changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "Assets/timestamp.txt"
+          message: "Automated commit: Adding timestamp file"
+          push: true
+ 
