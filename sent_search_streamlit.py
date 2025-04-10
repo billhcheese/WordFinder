@@ -11,6 +11,7 @@ import re
 import pandas as pd
 import numpy as np
 import csv
+import time
 
 #FUNCTIONS TO PROCESS THE WORD DOC AND XML------------------------------------
 def unzip_word_document(docx_path, extract_to_folder):
@@ -37,7 +38,6 @@ def unzip_docx(docx_file):
         temp_dir = tempfile.mkdtemp()
     
     # Unzip the .docx file (it's essentially a ZIP file)
-    st.write("Unzipping the DOCX file...")
     with zipfile.ZipFile(docx_file, 'r') as zip_ref:
         zip_ref.extractall(temp_dir)
     
@@ -113,7 +113,10 @@ def clean_part(part):
 
 def process_sentences(part, page_number, sentence_list, sentence_id, current_sentence):
     """Processes the part into sentences and handles combining short sentences."""
-    sentences = part.split('.')
+    # Pattern explanation:
+    # (?<!\d)\.   => match a period (.) that is NOT preceded by a digit (\d)
+    # (?=\s|$)    => ensure the period is followed by a space or end of string (optional for better cleanup)
+    sentences = re.split(r'(?<!\d)\.(?=\s|$)', part)
     for sentence in sentences:
         sentence = sentence.strip()
         if sentence:
@@ -121,7 +124,7 @@ def process_sentences(part, page_number, sentence_list, sentence_id, current_sen
                 current_sentence += ' ' + sentence
             else:
                 if current_sentence:
-                    sentence_list.append({'sent_id': sentence_id, 'sentence': current_sentence.lower(), 'page': page_number, 'matches':[]})
+                    sentence_list.append({'sent_id': sentence_id, 'sentence': current_sentence, 'page': page_number, 'matches':[]})
                     #sentence_list.append({'sent_id': sentence_id, 'sentence': current_sentence.lower(), 'page': page_number, 'matches':[], 'found_words':[]})
                     sentence_id += 1
                 current_sentence = sentence
@@ -202,10 +205,12 @@ def check_sentence(sentence_list,word_list,white_list = []): #to compare the sen
     sensitivity = 75
     similarity_tracker = {}
     token_word_dict = tokenize_word(word_list)
-    
+    progress_count = 0
+    progress_bar_single = st.progress(progress_count, text='Processing single word matches...')
+
     #process single word comparisons
     for sent_item in sentence_list:
-        sentence = sent_item['sentence']
+        sentence = sent_item['sentence'].lower()
         sent_id = sent_item['sent_id']
         token_sent = tokenize_sent(sentence)
         similarity_tracker[sent_id] = {}
@@ -221,7 +226,14 @@ def check_sentence(sentence_list,word_list,white_list = []): #to compare the sen
                             'ratio': word_ratio,
                             'found': sent_word
                             })
+        progress_count += 1
+        percent_count = round((progress_count)/len(sentence_list),2)
+        progress_bar_single.progress(percent_count, text=f'Processing single word matches...{percent_count*100}%')
+    progress_bar_single.empty()
+    st.text(f'Processing single word matches completed')
 
+    progress_count = 0
+    progress_bar_multi = st.progress(progress_count, text='Processing phrase matches...')
     # Iterate through the dictionary for multi-word phrases
     for sent_id, sent_dict in similarity_tracker.items():
         qualified_words = []
@@ -247,6 +259,12 @@ def check_sentence(sentence_list,word_list,white_list = []): #to compare the sen
                         'ratio': None,
                         'found': list(words_extract)
                         })
+        #time.sleep(0.01)
+        progress_count += 1
+        percent_count = round((progress_count)/len(similarity_tracker),2)
+        progress_bar_multi.progress(percent_count, text=f'Processing phrase matches...{percent_count*100}%')
+    progress_bar_multi.empty()
+    st.text(f'Processing phrase matches completed')
 
 #utility functions
 def max_ignore_none(data):
@@ -333,7 +351,7 @@ def main():
     whitelist_incl = st.toggle("Too many similar words matching? Exclude a list of exact words")
     if whitelist_incl:
         st.header("Upload a Specific List of Words You Want to :red[Exclude]")
-        uploaded_whitelist_txt = st.file_uploader(":grey[Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below. *This does not exclude phrases at the moment.*]", type=["txt"], key = "txt_uploader_whitelist")
+        uploaded_whitelist_txt = st.file_uploader(":grey[Words on excluded word list will override words on the search word list. Must choose a TXT file. Make sure your TXT file word list is structured correctly. See [Word List Structure Rules](#txt-format) below. *This does not exclude phrases at the moment.*]", type=["txt"], key = "txt_uploader_whitelist")
 
     # Streamlit app to display instructions
     
@@ -355,66 +373,70 @@ def main():
                         txt_white_tmp.write(uploaded_whitelist_txt.getvalue())
                         white_list_docx = txt_white_tmp.name
 
-            st.write("File successfully uploaded!")
-            
-            # Unzip the DOCX file
-            temp_dir = unzip_docx(word_docx)
+            with st.status("treasure hunting in the text..."):
+                st.write("File successfully uploaded!")
+                
+                # Unzip the DOCX file
+                st.write("Unzipping the DOCX file...")
+                temp_dir = unzip_docx(word_docx)
+                
 
-            # Process the unzipped DOCX contents (e.g., extract text from the document.xml file)
-            document_xml_path = os.path.join(temp_dir, 'word', 'document.xml')
+                # Process the unzipped DOCX contents (e.g., extract text from the document.xml file)
+                document_xml_path = os.path.join(temp_dir, 'word', 'document.xml')
 
-            #unzip_word_document(word_docx)
+                #unzip_word_document(word_docx)
 
-            #xml_file = 'word/document.xml'
-            
-            # Parse XML and extract matches
-            root = parse_xml(document_xml_path)
-            matches = extract_matches(root)
-            st.write('xml parsed')
-            
-            # Write the matches to a log file
-            xml_parsed = write_matches_to_log(matches, logger = False)
-            st.write('xml written to log')
+                #xml_file = 'word/document.xml'
+                
+                # Parse XML and extract matches
+                root = parse_xml(document_xml_path)
+                matches = extract_matches(root)
+                st.write('xml parsed')
+                
+                # Write the matches to a log file
+                xml_parsed = write_matches_to_log(matches, logger = False)
+                st.write('xml written')
 
-            # Turn xml into sentence units
-            sentence_list = sentence_convert(xml_parsed)
-            st.write('sentence list created')
-            
-            # Load the word list
-            word_list = load_word_list(word_list_docx)
-            st.write('word list loaded')
+                # Turn xml into sentence units
+                sentence_list = sentence_convert(xml_parsed)
+                st.write('sentence list created')
+                
+                # Load the word list
+                word_list = load_word_list(word_list_docx)
+                st.write('word list loaded')
 
-            # Load the uploaded file
-            if whitelist_incl:
-                if uploaded_whitelist_txt is not None:
-                    st.write('whitelist is uploaded')
-                    whitelist = load_white_list(white_list_docx)
-                    wh_uploaded = True
-                    st.write('whitelist loaded')
+                # Load the uploaded file
+                if whitelist_incl:
+                    if uploaded_whitelist_txt is not None:
+                        st.write('whitelist is uploaded')
+                        whitelist = load_white_list(white_list_docx)
+                        wh_uploaded = True
+                        st.write('whitelist loaded')
+                    else:
+                        st.write('whitelist is not uploaded')
+                        whitelist = []
+                        wh_uploaded = False
+                        st.write('whitelist is not loaded')
                 else:
                     st.write('whitelist is not uploaded')
                     whitelist = []
                     wh_uploaded = False
                     st.write('whitelist is not loaded')
-            else:
-                st.write('whitelist is not uploaded')
-                whitelist = []
-                wh_uploaded = False
-                st.write('whitelist is not loaded')
 
-            st.write('processing matches... (this may take a few minutes)')
+                st.write('processing matches... (this may take a few minutes)')
 
-            # Check the sentences for matches
-            check_sentence(sentence_list, word_list, whitelist)
-            st.write('sentences checked')
+                # Check the sentences for matches
+                check_sentence(sentence_list, word_list, whitelist)
+                st.write('sentences checked')
 
-            # Create the DataFrame
-            collapsed_df = collapse_sentence_data(sentence_list)
+                # Create the DataFrame
+                collapsed_df = collapse_sentence_data(sentence_list)
 
-            # Save the DataFrame to a CSV file
-            csv_file = NamedTemporaryFile(delete=False, mode='w', suffix='.csv', newline='')
-            collapsed_df.to_csv(csv_file.name, index=False)
-            st.write('collapsed data saved to csv')
+                # Save the DataFrame to a CSV file
+                csv_buffer = io.StringIO()
+                collapsed_df.to_csv(csv_buffer, encoding='utf-8-sig', index=False)
+                csv_data = csv_buffer.getvalue()
+                st.write('collapsed data saved to csv')
 
             # Display the collapsed DataFrame
             #print(sentence_list)
@@ -428,18 +450,17 @@ def main():
                     os.rmdir(os.path.join(root, name))
             os.rmdir(temp_dir)
 
-            with open(csv_file.name, 'r') as f:
-                st.download_button(
-                label="Download Generated Files",
-                data=f,
-                file_name="wordfinder_matches.csv",
-                mime="text/csv",
-                )
+            # Create a download button for the CSV file
+            st.download_button(
+            label="Download Generated Files",
+            data=csv_data,
+            file_name="wordfinder_matches.csv",
+            mime="text/csv",
+            )
             
             # Clean up the temporary files
             os.remove(word_docx)
             os.remove(word_list_docx)
-            os.remove(csv_file.name)
     
     st.divider()
 
