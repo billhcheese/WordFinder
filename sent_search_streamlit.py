@@ -287,17 +287,22 @@ def concat_lists_strings(series):
 def collapse_sentence_data(sentence_list):
     # Create the DataFrame
     df = pd.json_normalize(sentence_list, 'matches', ['sent_id', 'sentence', 'page'], errors='ignore')
+    if 'match' not in df.columns or df['match'].dropna().empty:
+        st.warning("No matches found.")
+        collapsed_df = pd.DataFrame()
+        return collapsed_df
+    else:
+        st.write("✅ Matches found.")
+        # Grouping by 'sent_id' and applying the aggregation
+        collapsed_df = df.groupby('sent_id').agg(
+            list_matchs=('match', lambda x: concat_lists_strings(x)),  # Concatenate match strings
+            found_words=('found', lambda x: concat_lists_strings(x)),  # Concatenate found strings
+            match_certainty=('ratio', lambda x: max(filter(lambda y: y is not None, x), default=None)),  # Take max of ratio, ignore None
+            sentence=('sentence', 'first'),  # Take the first sentence for each group
+            page_at_or_below=('page', 'first')  # Take the first page for each group
+        ).reset_index()
 
-    # Grouping by 'sent_id' and applying the aggregation
-    collapsed_df = df.groupby('sent_id').agg(
-        list_matchs=('match', lambda x: concat_lists_strings(x)),  # Concatenate match strings
-        found_words=('found', lambda x: concat_lists_strings(x)),  # Concatenate found strings
-        match_certainty=('ratio', lambda x: max(filter(lambda y: y is not None, x), default=None)),  # Take max of ratio, ignore None
-        sentence=('sentence', 'first'),  # Take the first sentence for each group
-        page_at_or_below=('page', 'first')  # Take the first page for each group
-    ).reset_index()
-
-    return collapsed_df
+        return collapsed_df
 
 # RUNNING THE MAIN FUNCTION--------------------------------------
 def main():
@@ -432,11 +437,22 @@ def main():
                 # Create the DataFrame
                 collapsed_df = collapse_sentence_data(sentence_list)
 
+            if collapsed_df.empty:
+                st.warning("No Matches Found. No CSV generated. Looks like you're good to go!")
+            else:
                 # Save the DataFrame to a CSV file
                 csv_buffer = io.StringIO()
                 collapsed_df.to_csv(csv_buffer, encoding='utf-8-sig', index=False)
                 csv_data = csv_buffer.getvalue()
-                st.write('collapsed data saved to csv')
+                st.success('Matches Found! Collaped data saved to CSV. Time to get to work!')
+
+                # Create a download button for the CSV file
+                st.download_button(
+                label="Download Generated Files",
+                data=csv_data,
+                file_name="wordfinder_matches.csv",
+                mime="text/csv",
+                )
 
             # Display the collapsed DataFrame
             #print(sentence_list)
@@ -450,14 +466,6 @@ def main():
                     os.rmdir(os.path.join(root, name))
             os.rmdir(temp_dir)
 
-            # Create a download button for the CSV file
-            st.download_button(
-            label="Download Generated Files",
-            data=csv_data,
-            file_name="wordfinder_matches.csv",
-            mime="text/csv",
-            )
-            
             # Clean up the temporary files
             os.remove(word_docx)
             os.remove(word_list_docx)
